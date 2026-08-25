@@ -32,10 +32,7 @@ async function createReview(req, res) {
     const seller = await User.findById(sellerId);
     if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
-    const already = await Review.exists(sellerId, reviewerId);
-    if (already) {
-      return res.status(409).json({ message: 'You have already reviewed this seller' });
-    }
+
 
     const { rating, comment } = req.body;
     if (!rating || rating < 1 || rating > 5) {

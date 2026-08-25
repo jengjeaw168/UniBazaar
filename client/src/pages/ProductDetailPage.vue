@@ -81,8 +81,6 @@
 
       <!-- Submit review -->
       <div v-if="auth.isLoggedIn && !isOwner" class="review-form">
-        <div v-if="reviewError"   class="alert alert-error">{{ reviewError }}</div>
-        <div v-if="reviewSuccess" class="alert alert-success">{{ reviewSuccess }}</div>
         <div class="form-group">
           <label>ให้คะแนน</label>
           <select v-model="reviewForm.rating" class="form-control" style="width:auto">
@@ -126,8 +124,6 @@ const loading       = ref(true)
 const error         = ref('')
 const currentImageIndex = ref(0)
 const reviewForm    = ref({ rating: 5, comment: '' })
-const reviewError   = ref('')
-const reviewSuccess = ref('')
 const submitting    = ref(false)
 const qty           = ref(1)
 
@@ -190,7 +186,7 @@ async function fetchReviews() {
   if (!product.value) return
   try {
     const { data } = await reviewAPI.getBySeller(product.value.seller_id)
-    reviews.value = data
+    reviews.value = data.reviews
   } catch (err) {
     console.error('Failed to load reviews')
   }
@@ -198,19 +194,24 @@ async function fetchReviews() {
 
 async function submitReview() {
   if (!reviewForm.value.comment.trim()) {
-    reviewError.value = 'กรุณากรอกความคิดเห็น'
+    Swal.fire({ icon: 'warning', text: 'กรุณากรอกความคิดเห็น', confirmButtonColor: '#f36523' })
     return
   }
-  reviewError.value = ''; reviewSuccess.value = ''
   submitting.value = true
   try {
     const { data } = await reviewAPI.create(product.value.seller_id, reviewForm.value)
-    reviews.value.unshift(data)
-    reviewSuccess.value = 'ส่งรีวิวสำเร็จ!'
+    product.value.avg_rating = data.avg_rating
+    product.value.review_count = data.review_count
+    await fetchReviews()
+    Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'ส่งรีวิวสำเร็จ!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false })
     reviewForm.value.comment = ''
     reviewForm.value.rating = 5
   } catch (err) {
-    reviewError.value = err.response?.data?.message || 'ส่งรีวิวไม่สำเร็จ'
+    let msg = err.response?.data?.message || 'ส่งรีวิวไม่สำเร็จ'
+    if (msg === 'You have already reviewed this seller') {
+      msg = 'คุณได้รีวิวผู้ขายรายนี้ไปแล้ว'
+    }
+    Swal.fire({ icon: 'error', text: msg, confirmButtonColor: '#f36523' })
   } finally {
     submitting.value = false
   }

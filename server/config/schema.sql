@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   rating      TINYINT      NOT NULL CHECK (rating BETWEEN 1 AND 5),
   comment     TEXT         DEFAULT NULL,
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_review (seller_id, reviewer_id),
+  INDEX idx_seller_id (seller_id),
   FOREIGN KEY (seller_id)   REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE
 );
